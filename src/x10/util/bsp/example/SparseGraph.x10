@@ -22,16 +22,22 @@ public class SparseGraph {
 		}
 		var parent:Any=null;
 		public def run(m:List[Any], phase:Int, runner:PLH) {
-			//JobRunner.say("Running " + this, phase);
 			if (parent == null) parent = m(0);
 			else if (phase > 0) return;
-			for (edge in edges) edge.accept(ref(), phase, runner);
+			
+			finish for (edge in edges) async {
+				edge.accept(ref(), phase, runner);
+			}
 		}
-		public def toString() ="V(" + i + " at " + here + ")";
-		public def print() {
+		val pp = here.id;
+		public def toString() ="V(" + i + " at " + pp + ")";
+		public def toFullString() {
 			var s:String = ref() + " [parent=" + parent + ", edges=";
 			for (edge in edges) s += edge.toString() + " ";
-			Console.OUT.println(s + "]");	
+			return s + "]";	
+		}
+		public def print() {
+			Console.OUT.println(toFullString());	
 		}
 		
 	}
@@ -89,11 +95,12 @@ public class SparseGraph {
 			}                      
 			public def shouldRunAgain(phase:Int)=true;
 		};
-		g.print();
-		Console.OUT.println("Executing job");
+		//g.print();
+		Console.OUT.println("Start job");
+		val startTime = System.nanoTime();
 		JobRunner.submit(job);
-		g.print();
-		
+		val runningTime = System.nanoTime() - startTime;
+		//g.print();
+		Console.OUT.println("ExecutedIn " + runningTime);
 	}
-	 
 }

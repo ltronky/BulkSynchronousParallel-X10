@@ -51,7 +51,9 @@ public class Agent[S, T]{T <: Agent[S, T]} {
 	 * TODO: Accept messages to be processed in phase now+k, for k >= 1.
 	 */
 	public final def accept(m:S, phase:Int, runner:PLHJ[S,T]):Unit {
-		messages((phase+1)%2).add(m); // add in the next phase
+		atomic {
+			messages((phase+1)%2).add(m); // add in the next phase
+		}
 		if (activate) {
 			runner().activate(this as T, phase);
 			activate=false;
