@@ -8,12 +8,10 @@ import x10.util.List;
    The execution engine for a Job[S,T].
  */
 public class JobRunner[S,T](job:Job[S,T]){T <: Agent[S, T]} {
-    val activeAgents = [new ArrayList[T]() as List[T], new ArrayList[T]()];
-    public def activate(a:T, phase:Int) { atomic activeAgents((phase+1)%2).add(a);}
-    public def hasNoActiveAgents(phase:Int):Boolean = activeAgents(phase%2).isEmpty();
-    static val AND = new Reducible[Boolean]() {
-        public def zero()=true;
-        public operator this(a:Boolean, b:Boolean)=a&&b;
+    val agents:ArrayList[T] = new ArrayList[T]();
+    static val OR = new Reducible[Boolean]() {
+    	public def zero()=false;
+    	public operator this(a:Boolean, b:Boolean)=a||b;
     };
     
     public static def say(s:String, phase:Int){
@@ -29,32 +27,24 @@ public class JobRunner[S,T](job:Job[S,T]){T <: Agent[S, T]} {
         val jobRunners = PlaceLocalHandle.make[JobRunner[S,T]](Place.places(), ()=>new JobRunner[S, T](job));
         //Init startAgents
         finish for (p in Place.places()) at (p) async {
-        	if (jobRunners().job.startAgents() != null)
-        		jobRunners().activeAgents(0).addAll(jobRunners().job.startAgents());
+        	jobRunners().agents.addAll(jobRunners().job.startAgents());
         }
         
         var gPhase:Int=0n;
-        var noActive:Boolean = false;
+        var isThereAnyActive:Boolean = false;
         do {
         	val phase = gPhase;
-        	finish for (p in Place.places()) at (p) async {
-	            val agents = jobRunners().activeAgents(phase%2);
-            	if (agents != null) {
-            		for (agent in agents)
-            			agent.run(phase, jobRunners);
-            		agents.clear();
-            	}
-        	} // async, at, for, finish
+        	isThereAnyActive = finish(OR) {
+        		for (p in Place.places()) at (p) async {
+		            var act:Boolean = false;
+            		for (agent in  jobRunners().agents) {
+            			act = agent.run(phase) || act;
+            		}
+	            	offer act;
+	        	}
+        	};// async, at, for, finish
         	Console.OUT.println("ExecutedPhase(" + phase + ")");
-        	val nextPhase = phase+1n;
-            noActive = finish (AND) {
-                for (place in Place.places()) 
-                    at (place) 
-                        async 
-                        offer jobRunners().hasNoActiveAgents(nextPhase);
-            };
-
             gPhase++;
-        } while (job.shouldRunAgain(gPhase) && !noActive);
+        } while (job.shouldRunAgain(gPhase) && isThereAnyActive);
     }
 }

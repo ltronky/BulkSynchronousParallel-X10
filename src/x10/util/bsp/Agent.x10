@@ -44,32 +44,34 @@ public class Agent[S, T]{T <: Agent[S, T]} {
     }
     
 	protected val messages =[new ArrayList[S](), new ArrayList[S]()];
-	private var activate:Boolean=true;
+	// private var activate:Boolean=true;
 	
 	/**
 	 * Accept a message in given phase. Will be processed in the next phase.
 	 * TODO: Accept messages to be processed in phase now+k, for k >= 1.
 	 */
-	public final def accept(m:S, phase:Int, runner:PLHJ[S,T]):Unit {
+	public final def accept(m:S, phase:Int):Unit {
 		atomic {
 			messages((phase+1)%2).add(m); // add in the next phase
 		}
-		if (activate) {
-			runner().activate(this as T, phase);
-			activate=false;
-		}
 		return Unit();
 	}
+	def getId():Int {return -1n;}
 	
 	/**
 	 * Run this agent in this phase. Called by the engine precisely on those
 	 * agents which received a message in the last phase.
 	 */
-	public final def run(phase:Int, runner:PLHJ[S, T]) {
-		activate=true;
+	public final def run(phase:Int):Boolean {
+		// activate=true;
 		val m = messages(phase%2);
-		run(m, phase, runner);
+		if (m.isEmpty())
+			return false;
+		
+		
+		val rr = run(m, phase);
 		m.clear();
+		return rr;
 	}
 	/**
 	 * Workhorse for the agent. Specifies the code that should run
@@ -80,7 +82,8 @@ public class Agent[S, T]{T <: Agent[S, T]} {
 	 * Note: the phase passed into the accept call must be the phase
 	 * passed into this method.
 	 */
-	protected def run(m:List[S], phase:Int, runner:PLHJ[S, T]) {
+	protected def run(m:List[S], phase:Int):Boolean {
 		// default is to do nothing.
+		return false;
 	}
 }

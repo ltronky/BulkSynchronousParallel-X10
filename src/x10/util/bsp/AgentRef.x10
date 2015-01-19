@@ -7,8 +7,8 @@ public class AgentRef[S,T](ref:GlobalRef[T]){T <: Agent[S,T]} {
     /**
        Accept a message and deliver it to the referenced agent.
      */
-    public def accept(m:S, phase:Int, plh:PLHJ[S,T]){
-        ref.evalAtHome((r:T)=>r.accept(m, phase, plh));
+    public def accept(m:S, phase:Int){
+        ref.evalAtHome((r:T)=>r.accept(m, phase));
     }
     public def toString() = ref.evalAtHome((r:T) => r.toString());
     public def hashCode() = ref.hashCode();

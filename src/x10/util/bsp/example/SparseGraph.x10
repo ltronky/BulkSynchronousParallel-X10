@@ -2,7 +2,6 @@ package x10.util.bsp.example;
 
 import x10.util.bsp.*;
 
-
 import x10.util.ArrayList;
 import x10.util.List;
 import x10.util.Random;
@@ -20,14 +19,17 @@ public class SparseGraph {
 			if (edges.contains(a) || a.equals(ref())) return;
 			edges.add(a);
 		}
+		def getId() = i;
 		var parent:Any=null;
-		public def run(m:List[Any], phase:Int, runner:PLH) {
-			if (parent == null) parent = m(0);
-			else if (phase > 0) return;
+		public def run(m:List[Any], phase:Int):Boolean {
+			if (parent != null)
+				return false;
 			
+			parent = m(0);
 			finish for (edge in edges) async {
-				edge.accept(ref(), phase, runner);
+				edge.accept(ref(), phase);
 			}
+			return true;
 		}
 		val pp = here.id;
 		public def toString() ="V(" + i + " at " + pp + ")";
@@ -79,28 +81,25 @@ public class SparseGraph {
 		}
 	}
 	public static def main(args:Rail[String]) {
-		val N = args.size > 0 ? Int.parseInt(args(0)) : 10n;
+		val N = args.size > 0 ? Int.parseInt(args(0)) : 5n;
 		val g = makeRandom(N);
 		val plh = g.myVertices;
 		val job :  VJob = new VJob() {
 			public def startAgents() = {
 			    if (here.id==0) {
-					val r = new ArrayList[V]();
 					val start = plh()(0);
-					start.parent=start.ref();
-					r.add(start);
-					return r;
+					start.accept(start.ref(), -1n);
 			    }
-			    return null;
+			    return plh();
 			}                      
 			public def shouldRunAgain(phase:Int)=true;
 		};
-		//g.print();
+		// g.print();
 		Console.OUT.println("Start job");
 		val startTime = System.nanoTime();
 		JobRunner.submit(job);
 		val runningTime = System.nanoTime() - startTime;
-		//g.print();
+		// g.print();
 		Console.OUT.println("ExecutedIn " + runningTime);
 	}
 }
