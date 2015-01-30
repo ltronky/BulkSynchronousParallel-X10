@@ -23,16 +23,16 @@ public class JobRunner[S,T](job:Job[S,T]){T <: Agent[S, T]} {
         	val phase = gPhase;
         	isThereAnyActive = finish(Reducible.OrReducer()) {
         		for (p in Place.places()) at (p) async {
-        			// var act:Boolean = false;
-        			// for (agent in  jobRunners().agents) {
-        			// 	act = agent.run(phase) || act;
-        			// }
+        			var act:Boolean = false;
+        			for (agent in  jobRunners().agents) {
+        				act = agent.run(phase) || act;
+        			}
         			
-        			val act = finish(Reducible.OrReducer()) {
-        				for (agent in  jobRunners().agents) async{
-        					offer agent.run(phase);
-        				}
-        			};
+        			// val act = finish(Reducible.OrReducer()) {
+        			// 	for (agent in  jobRunners().agents) async{
+        			// 		offer agent.run(phase);
+        			// 	}
+        			// };
         			offer act;
         		}
         	};// async, at, for, finish

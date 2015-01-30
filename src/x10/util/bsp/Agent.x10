@@ -44,7 +44,6 @@ public class Agent[S, T]{T <: Agent[S, T]} {
     }
     
 	protected val messages =[new ArrayList[S](), new ArrayList[S]()];
-	// private var activate:Boolean=true;
 	
 	/**
 	 * Accept a message in given phase. Will be processed in the next phase.
